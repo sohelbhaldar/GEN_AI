@@ -1,0 +1,10 @@
+tomato
+almonds
+onions
+lettuce
+pasta
+rice
+butter
+cereal
+cheese
+vegetables

@@ -1,0 +1,28 @@
+Here is the organized grocery list:
+
+**Produce (fruits and vegetables)**
+1. Tomato
+2. Onions
+3. Lettuce
+4. Vegetables
+
+**Meat, Poultry, and Seafood**
+
+**Dairy and Eggs**
+
+**Canned Goods**
+
+**Baking Supplies**
+
+**Pantry Staples (grains, snacks, etc.)**
+1. Pasta
+2. Rice
+3. Almonds
+4. Cereal
+5. Butter
+
+**Beverages**
+
+**Snacks**
+
+Note: Since there was no specific meat or seafood item in the list, it did not get assigned to any category.

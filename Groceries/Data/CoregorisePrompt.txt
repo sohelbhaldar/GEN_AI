@@ -1,0 +1,18 @@
+Use this list of items : {items}
+And Organize the grocery list into categories. Please assign each item to one of the following groups:
+
+
+* Produce (fruits and vegetables)
+* Meat, Poultry, and Seafood
+* Dairy and Eggs
+* Canned Goods
+* Baking Supplies
+* Pantry Staples (grains, snacks, etc.)
+* Beverages
+* Snacks
+
+For example, 'Apples' would go in the 'Produce' category, while 'Bread' would go in the 'Pantry Staples' category.
+
+Please list each item on a separate line and indicate the category it belongs to.
+
+
