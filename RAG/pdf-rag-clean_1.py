@@ -1,6 +1,5 @@
-# app.py
+# main.py
 
-#import streamlit as st
 import os
 import logging
 from langchain_community.document_loaders import UnstructuredPDFLoader
@@ -12,17 +11,18 @@ from langchain_ollama import ChatOllama
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
 from langchain.retrievers.multi_query import MultiQueryRetriever
+from chromadb.config import Settings
+import chromadb
 import ollama
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 
 # Constants
-DOC_PATH = "./PDFs/B-0507.pdf"
+DOC_PATH = "./data/BOI.pdf"
 MODEL_NAME = "llama3.2"
 EMBEDDING_MODEL = "nomic-embed-text"
 VECTOR_STORE_NAME = "simple-rag"
-PERSIST_DIRECTORY = "./chroma_db"
 
 
 def ingest_pdf(doc_path):
@@ -31,10 +31,10 @@ def ingest_pdf(doc_path):
         loader = UnstructuredPDFLoader(file_path=doc_path)
         data = loader.load()
         logging.info("PDF loaded successfully.")
+        #logging.info(data[0].page_content)
         return data
     else:
         logging.error(f"PDF file not found at path: {doc_path}")
-        st.error("PDF file not found.")
         return None
 
 
@@ -43,41 +43,38 @@ def split_documents(documents):
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=1200, chunk_overlap=300)
     chunks = text_splitter.split_documents(documents)
     logging.info("Documents split into chunks.")
+    logging.info(f"Number of chunks.{len(chunks)}")
+    #logging.info(f"Example of chunks.{chunks[0]}")
     return chunks
 
 
-#@st.cache_resource
-def load_vector_db():
-    """Load or create the vector database."""
+def create_vector_db(chunks):
+    """Create a vector database from document chunks."""
     # Pull the embedding model if not already available
-    ollama.pull(EMBEDDING_MODEL)
-
-    embedding = OllamaEmbeddings(model=EMBEDDING_MODEL)
-
-    if os.path.exists(PERSIST_DIRECTORY):
-        vector_db = Chroma(
-            embedding_function=embedding,
-            collection_name=VECTOR_STORE_NAME,
-            persist_directory=PERSIST_DIRECTORY,
-        )
-        logging.info("Loaded existing vector database.")
-    else:
-        # Load and process the PDF document
-        data = ingest_pdf(DOC_PATH)
-        if data is None:
-            return None
-
-        # Split the documents into chunks
-        chunks = split_documents(data)
-
-        vector_db = Chroma.from_documents(
-            documents=chunks,
-            embedding=embedding,
-            collection_name=VECTOR_STORE_NAME,
-            persist_directory=PERSIST_DIRECTORY,
-        )
-        vector_db.persist()
-        logging.info("Vector database created and persisted.")
+    #  def from_documents(
+    #     cls: Type[Chroma],
+    #     documents: List[Document],
+    #     embedding: Optional[Embeddings] = None,
+    #     ids: Optional[List[str]] = None,
+    #     collection_name: str = _LANGCHAIN_DEFAULT_COLLECTION_NAME,
+    #     persist_directory: Optional[str] = None,
+    #     client_settings: Optional[chromadb.config.Settings] = None,
+    #     client: Optional[  # type: ignore[valid-type]
+    #         chromadb.Client
+    #     ] = None,  # Add this line  # type: ignore[valid-type]
+    #     collection_metadata: Optional[Dict] = None,
+    #     **kwargs: Any,
+    # )
+    #ollama.pull(EMBEDDING_MODEL)
+    #print(chunks)
+    client = chromadb.Client(Settings(anonymized_telemetry=False))
+    vector_db = Chroma.from_documents(
+        documents=chunks,
+        embedding=OllamaEmbeddings(model=EMBEDDING_MODEL),
+        collection_name=VECTOR_STORE_NAME,
+        client=client
+    )
+    logging.info("Vector database created.")
     return vector_db
 
 
@@ -101,7 +98,7 @@ Original question: {question}""",
 
 
 def create_chain(retriever, llm):
-    """Create the chain with preserved syntax."""
+    """Create the chain"""
     # RAG prompt
     template = """Answer the question based ONLY on the following context:
 {context}
@@ -117,39 +114,38 @@ Question: {question}
         | StrOutputParser()
     )
 
-    logging.info("Chain created with preserved syntax.")
+    logging.info("Chain created successfully.")
     return chain
 
 
 def main():
-    #st.title("Document Assistant")
+    # Load and process the PDF document
+    data = ingest_pdf(DOC_PATH)
+    if data is None:
+        return
 
-    # User input
-    #user_input = st.text_input("Enter your question:", "")
+    # Split the documents into chunks
+    chunks = split_documents(data)
 
-    try:
-        # Initialize the language model
-        llm = ChatOllama(model=MODEL_NAME)
+    # Create the vector database
+    vector_db = create_vector_db(chunks)
 
-        # Load the vector database
-        vector_db = load_vector_db()
-        if vector_db is None:
-            #st.error("Failed to load or create the vector database.")
-            return
+    # Initialize the language model
+    llm = ChatOllama(model=MODEL_NAME)
 
-        # Create the retriever
-        retriever = create_retriever(vector_db, llm)
+    # Create the retriever
+    retriever = create_retriever(vector_db, llm)
 
-        # Create the chain
-        chain = create_chain(retriever, llm)
+    # Create the chain with preserved syntax
+    chain = create_chain(retriever, llm)
 
-        # Get the response
-        response = chain.invoke(input="what is the document about?")
+    # Example query
+    question = "How to report BOI?"
 
-        #st.markdown("**Assistant:**")
-        print.write(response)
-    except Exception as e:
-        print.error(f"An error occurred: {str(e)}")
+    # Get the response
+    res = chain.invoke(input=question)
+    print("Response:")
+    print(res)
 
 
 if __name__ == "__main__":

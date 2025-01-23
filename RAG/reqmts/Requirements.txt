@@ -11,3 +11,9 @@ fastembed
 pdfplumber
 sentence-transformers
 elevenlabs
+pyttsx3
+threading
+flask
+flask_cors
+speech_recognition
+requests

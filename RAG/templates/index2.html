@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flask Authentication UI</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f9;
+        }
+        .container {
+            width: 300px;
+            padding: 20px;
+            border-radius: 8px;
+            background-color: white;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .message {
+            margin-top: 10px;
+            text-align: center;
+        }
+        .message.error {
+            color: red;
+        }
+        .message.success {
+            color: green;
+        }
+        .protected-content {
+            display: none;
+            margin-top: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Login</h1>
+        <input type="text" id="username" placeholder="Username">
+        <input type="password" id="password" placeholder="Password">
+        <button onclick="login()">Login</button>
+
+        <div class="message" id="message"></div>
+
+        <div class="protected-content" id="protected-content">
+            <h2>Welcome, <span id="user-name"></span>!</h2>
+            <p>This is a protected page.</p>
+            <button onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+    <script>
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const messageDiv = document.getElementById('message');
+
+            // Clear any previous messages
+            messageDiv.textContent = '';
+
+            if (!username || !password) {
+                messageDiv.textContent = 'Please provide both username and password.';
+                messageDiv.classList.add('error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/protected', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': 'Basic ' + btoa(username + ':' + password)
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    messageDiv.textContent = `Logged in as ${data.message}`;
+                    messageDiv.classList.remove('error');
+                    messageDiv.classList.add('success');
+                    showProtectedContent(username);
+                } else {
+                    throw new Error('Invalid credentials');
+                }
+            } catch (error) {
+                messageDiv.textContent = 'Authentication failed: ' + error.message;
+                messageDiv.classList.add('error');
+            }
+        }
+
+        function showProtectedContent(username) {
+            document.getElementById('username').disabled = true;
+            document.getElementById('password').disabled = true;
+            document.querySelector('button').disabled = true;
+            document.getElementById('protected-content').style.display = 'block';
+            document.getElementById('user-name').textContent = username;
+        }
+
+        function logout() {
+            document.getElementById('username').disabled = false;
+            document.getElementById('password').disabled = false;
+            document.querySelector('button').disabled = false;
+            document.getElementById('protected-content').style.display = 'none';
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+            document.getElementById('message').textContent = '';
+        }
+    </script>
+
+</body>
+</html>

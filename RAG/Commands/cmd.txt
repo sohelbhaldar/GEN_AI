@@ -1,0 +1,5 @@
+In VS code
+To create virtual environment = venv\Scripts\activate.bat
+python -m Controller.InputController
+pdfs can be accessed from the constants from another fdlder using the following path
+./data/<pdfName>

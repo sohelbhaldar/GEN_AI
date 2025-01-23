@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Speech Recognition Microservice</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center">Speech Recognition Microservice</h1>
+        <div class="mt-4">
+            <h3>Recognized Speech:</h3>
+            <div id="speech-text" class="border p-3 rounded bg-light" style="min-height: 150px; max-height: 300px; overflow-y: auto;"></div>
+        </div>
+        <div class="text-center mt-3">
+            <p class="text-muted">The system will start listening when you say "Hey Brightly". Say "stop" to terminate the service.</p>
+        </div>
+    </div>
+
+    <script>
+        const speechTextDiv = document.getElementById('speech-text');
+
+        async function fetchText() {
+            try {
+                const response = await fetch('/get_text');
+                const data = await response.json();
+                if (data.text && data.text.length > 0) {
+                    // Clear the existing text before displaying new content
+                    speechTextDiv.innerHTML = '';
+
+                    // Display the most recent recognized text
+                    data.text.forEach(text => {
+                        const paragraph = document.createElement('p');
+                        paragraph.textContent = text;
+                        speechTextDiv.appendChild(paragraph);
+                    });
+                }
+            } catch (error) {
+                console.error('Error fetching speech text:', error);
+            }
+        }
+
+        // Poll the server every 1 second
+        setInterval(fetchText, 1000);
+    </script>
+</body>
+</html>
